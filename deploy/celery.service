@@ -1,0 +1,17 @@
+[Unit]
+Description=BulkGame Celery worker (async delete jobs)
+After=network.target redis-server.service
+# If Redis unit name differs: systemctl list-units '*redis*' and edit After=
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/bulkgame
+Environment="PATH=/var/www/bulkgame/venv/bin"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/var/www/bulkgame/venv/bin/celery -A bulkdel worker -l info --concurrency=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

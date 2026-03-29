@@ -120,6 +120,9 @@ CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://127.0.0.1:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=CELERY_BROKER_URL)
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 60 * 30
+# cPanel / shared hosting: no Celery worker — fb_remover uses apply() when this is True (see views).
+CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
+CELERY_TASK_EAGER_PROPAGATES = True
 
 # Facebook OAuth (Phase 2+)
 FACEBOOK_APP_ID = env("FACEBOOK_APP_ID", default="")

@@ -1,0 +1,2 @@
+# cPanel / CloudLinux Python (Passenger): this file must exist so "Restart app" works.
+# Your host may append Passenger* directives here automatically — do not delete this file.

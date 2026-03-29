@@ -59,7 +59,10 @@ def queue_delete_job(request):
 
     from fb_remover.tasks import process_delete_job
 
-    if settings.DEBUG:
+    # Local: DEBUG runs inline. Production VPS: Celery worker + Redis uses .delay().
+    # cPanel / shared hosting usually has no worker — set CELERY_TASK_ALWAYS_EAGER=True in .env
+    # or deletes stay "queued" forever and never call Facebook.
+    if settings.DEBUG or getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False):
         process_delete_job.apply(args=[job.id])
     else:
         process_delete_job.delay(job.id)
