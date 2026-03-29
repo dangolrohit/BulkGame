@@ -9,7 +9,7 @@ WorkingDirectory=/var/www/bulkgame
 Environment="PATH=/var/www/bulkgame/venv/bin"
 Environment="PYTHONUNBUFFERED=1"
 ExecStart=/var/www/bulkgame/venv/bin/gunicorn \
-    --bind 127.0.0.1:8001 \
+    --bind 127.0.0.1:8002 \
     --workers 3 \
     --timeout 120 \
     --error-logfile - \
