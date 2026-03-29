@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ u.full_name }} — BulkGame{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">{{ u.full_name }}</h1>
+  <div>
+    <a class="btn btn-sm btn-success" href="{% url 'adminpanel:user_topup' u.pk %}">Topup</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'adminpanel:user_list' %}">Back</a>
+  </div>
+</div>
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header">Account</div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">Email: {{ u.email }}</li>
+        <li class="list-group-item">Role: {{ u.role }}</li>
+        <li class="list-group-item">Status: {% if u.is_active %}Active{% else %}Inactive{% endif %}</li>
+        <li class="list-group-item">Joined: {{ u.date_joined }}</li>
+        <li class="list-group-item">Last login: {{ u.last_login|default:"—" }}</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header">Credits</div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">Current balance: <strong>{{ wallet.balance }}</strong></li>
+        <li class="list-group-item">Lifetime added: {{ wallet.lifetime_added }}</li>
+        <li class="list-group-item">Lifetime used: {{ wallet.lifetime_used }}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mt-3">
+  <div class="card-header">Facebook</div>
+  <div class="card-body">
+    <p class="small text-muted mb-2">Connections: {{ connections.count }}</p>
+    <p class="small text-muted mb-2">Pages (sample):</p>
+    <ul class="small">
+      {% for p in pages %}
+        <li>{{ p.page_name }} ({{ p.page_id }})</li>
+      {% empty %}
+        <li class="text-muted">No pages synced.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<div class="card shadow-sm mt-3">
+  <div class="card-header">Recent delete jobs</div>
+  <ul class="list-group list-group-flush">
+    {% for j in jobs %}
+      <li class="list-group-item small d-flex justify-content-between">
+        <span>{{ j.page.page_name }} — {{ j.get_status_display }}</span>
+        <span class="text-muted">{{ j.success_count }}/{{ j.requested_count }}</span>
+      </li>
+    {% empty %}
+      <li class="list-group-item text-muted">No jobs.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

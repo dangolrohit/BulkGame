@@ -1,0 +1,31 @@
+<div class="mb-3">
+  <label class="form-label" for="id_full_name">Full name</label>
+  <input type="text" name="full_name" id="id_full_name" class="form-control" value="{{ user.full_name }}" required autocomplete="name">
+</div>
+<div class="mb-3">
+  <label class="form-label">Email</label>
+  <p class="form-control-plaintext mb-0 py-2 rounded px-2" style="background:rgba(0,0,0,0.2);color:var(--text);">{{ user.email }}</p>
+  <p class="small mb-0 mt-1" style="color:var(--text-muted);">Email cannot be changed here.</p>
+</div>
+<div class="mb-3">
+  <label class="form-label">Phone</label>
+  <p class="form-control-plaintext mb-0 py-2 rounded px-2" style="background:rgba(0,0,0,0.2);color:var(--text);">{{ profile.phone|default:"—" }}</p>
+  <p class="small mb-0 mt-1" style="color:var(--text-muted);">Phone number cannot be changed here.</p>
+</div>
+{% if show_timezone %}
+<div class="mb-3">
+  <label class="form-label">Timezone</label>
+  <p class="form-control-plaintext mb-0 py-2 rounded px-2" style="background:rgba(0,0,0,0.2);color:var(--text);">{{ profile.timezone }}</p>
+</div>
+{% endif %}
+<hr class="border-secondary border-opacity-25 my-4">
+<div class="small text-uppercase mb-3" style="letter-spacing:0.06em;font-weight:600;color:var(--text-muted);">Change password</div>
+<p class="small mb-3" style="color:var(--text-muted);">Leave both fields empty to keep your current password. You do not need your old password.</p>
+<div class="mb-3">
+  <label class="form-label" for="id_new_password">New password</label>
+  <input type="password" name="new_password" id="id_new_password" class="form-control" autocomplete="new-password" placeholder="••••••••">
+</div>
+<div class="mb-3">
+  <label class="form-label" for="id_confirm_password">Confirm new password</label>
+  <input type="password" name="confirm_password" id="id_confirm_password" class="form-control" autocomplete="new-password" placeholder="••••••••">
+</div>

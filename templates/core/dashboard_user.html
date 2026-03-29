@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — BulkGame{% endblock %}
+{% block content %}
+<div class="tool-page-title mb-4">Dashboard</div>
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="glass-panel glass-panel--subtle h-100 p-3">
+      <div class="small text-uppercase mb-1" style="letter-spacing:0.08em;font-weight:600;color:var(--text-muted);">Credits</div>
+      <p class="mb-1 fs-2 fw-semibold" style="color:var(--text);">{{ balance }}</p>
+      <p class="small mb-0" style="color:var(--text-muted);">1 successful delete = 1 credit</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="glass-panel glass-panel--subtle h-100 p-3">
+      <div class="small text-uppercase mb-1" style="letter-spacing:0.08em;font-weight:600;color:var(--text-muted);">Posts deleted</div>
+      <p class="mb-0 fs-2 fw-semibold" style="color:var(--text);">{{ total_deleted }}</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="glass-panel glass-panel--subtle h-100 p-3">
+      <div class="small text-uppercase mb-1" style="letter-spacing:0.08em;font-weight:600;color:var(--text-muted);">Connected pages</div>
+      <p class="mb-1 fs-2 fw-semibold" style="color:var(--text);">{{ pages|length }}</p>
+      <a href="{% url 'channels:home' %}" style="color:var(--accent);font-size:0.85rem;">Manage channels</a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-6">
+    <div class="glass-panel glass-panel--subtle overflow-hidden">
+      <div class="px-3 py-2 border-bottom" style="border-color:var(--glass-border) !important;color:var(--text-muted);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Recent delete jobs</div>
+      <ul class="list-group list-group-flush" style="background:transparent;">
+        {% for j in recent_jobs %}
+          <li class="list-group-item d-flex justify-content-between border-secondary border-opacity-25" style="background:transparent;color:var(--text);font-size:0.875rem;">
+            <span>{{ j.page.page_name }} — {{ j.get_status_display }}</span>
+            <span style="color:var(--text-muted);font-size:0.8rem;">{{ j.success_count }}/{{ j.requested_count }}</span>
+          </li>
+        {% empty %}
+          <li class="list-group-item border-0" style="background:transparent;color:var(--text-muted);">No jobs yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="glass-panel glass-panel--subtle overflow-hidden">
+      <div class="px-3 py-2 border-bottom" style="border-color:var(--glass-border) !important;color:var(--text-muted);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;">Available tools</div>
+      <ul class="list-group list-group-flush" style="background:transparent;">
+        {% for t in tools %}
+          <li class="list-group-item d-flex justify-content-between align-items-center border-secondary border-opacity-25" style="background:transparent;color:var(--text);font-size:0.875rem;">
+            {{ t.name }}
+            {% if t.slug == "facebook-bulk-post-remover" %}
+              <a class="btn btn-glass-primary btn-sm" href="{% url 'tools:facebook_bulk_remover' %}">Launch tool</a>
+            {% else %}
+              <span class="small" style="color:var(--text-muted);">Soon</span>
+            {% endif %}
+          </li>
+        {% empty %}
+          <li class="list-group-item border-0" style="background:transparent;color:var(--text-muted);">No tools published.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

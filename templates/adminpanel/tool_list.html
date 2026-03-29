@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Tools management — BulkGame{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Tools management</h1>
+<div class="table-responsive shadow-sm bg-white rounded">
+  <table class="table table-sm mb-0">
+    <thead>
+      <tr>
+        <th>Tool</th><th>Published</th><th>Hidden</th><th>Maintenance</th><th>Updated</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tools %}
+        <tr>
+          <td>{{ t.name }}</td>
+          <td>{% if t.is_published %}Yes{% else %}No{% endif %}</td>
+          <td>{% if t.is_hidden %}Yes{% else %}No{% endif %}</td>
+          <td>{% if t.is_in_maintenance %}Yes{% else %}No{% endif %}</td>
+          <td class="small text-nowrap">{{ t.updated_at }}</td>
+          <td class="text-nowrap">
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'adminpanel:tool_edit' t.pk %}">Edit</a>
+            <form class="d-inline" method="post" action="{% url 'adminpanel:tool_publish' t.pk %}">{% csrf_token %}<button class="btn btn-sm btn-success">Publish</button></form>
+            <form class="d-inline" method="post" action="{% url 'adminpanel:tool_hide' t.pk %}">{% csrf_token %}<button class="btn btn-sm btn-dark">Hide</button></form>
+            <form class="d-inline" method="post" action="{% url 'adminpanel:tool_maintenance' t.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="enable" value="{% if t.is_in_maintenance %}0{% else %}1{% endif %}">
+              <button class="btn btn-sm btn-warning">Maint. {% if t.is_in_maintenance %}off{% else %}on{% endif %}</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="text-muted">No tools. Run <code>python manage.py seed_tools</code>.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

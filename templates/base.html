@@ -1,0 +1,148 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}BulkGame{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    .app-sidenav-aside { width: 260px; min-width: 260px; }
+  </style>
+</head>
+<body class="{% if user.is_authenticated %}{% if nav_user_sidenav or nav_is_admin %}glass-app {% endif %}{% endif %}bg-light">
+{% if user.is_authenticated and nav_user_sidenav %}
+<div class="d-flex flex-column min-vh-100">
+  <header class="d-md-none glass-mobile-header px-3 py-2 d-flex align-items-center justify-content-between">
+    <a class="text-decoration-none brand-mark" href="{% url 'core:dashboard' %}">BulkGame</a>
+    <button class="btn btn-glass btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#userSidenavOffcanvas" aria-controls="userSidenavOffcanvas">Menu</button>
+  </header>
+  <div class="d-flex flex-grow-1 min-vh-0">
+    <aside class="app-sidenav-aside d-none d-md-flex flex-column glass-sidenav py-3">
+      <a class="text-decoration-none px-3 mb-2 brand-mark fs-5" href="{% url 'core:dashboard' %}">BulkGame</a>
+      <div class="brand-subtle px-3 mb-3 text-truncate" title="{{ user.email }}">{{ user.email }}</div>
+      {% include "includes/user_sidenav_links.html" %}
+    </aside>
+    <div class="offcanvas offcanvas-start d-md-none glass-offcanvas" tabindex="-1" id="userSidenavOffcanvas" aria-labelledby="userSidenavLabel">
+      <div class="offcanvas-header border-bottom border-secondary border-opacity-25">
+        <div>
+          <div class="brand-mark" id="userSidenavLabel">BulkGame</div>
+          <div class="brand-subtle text-truncate" style="max-width: 200px;">{{ user.email }}</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body pt-3">
+        {% include "includes/user_sidenav_links.html" %}
+      </div>
+    </div>
+    <div class="flex-grow-1 overflow-auto">
+      <div class="p-3 p-md-4 app-max">
+{% elif user.is_authenticated and nav_is_admin %}
+<div class="d-flex flex-column min-vh-100">
+  <header class="d-md-none glass-mobile-header px-3 py-2 d-flex align-items-center justify-content-between">
+    <a class="text-decoration-none brand-mark" href="{% url 'adminpanel:dashboard' %}">BulkGame Admin</a>
+    <button class="btn btn-glass btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#adminSidenavOffcanvas" aria-controls="adminSidenavOffcanvas">Menu</button>
+  </header>
+  <div class="d-flex flex-grow-1 min-vh-0">
+    <aside class="app-sidenav-aside d-none d-md-flex flex-column glass-sidenav py-3">
+      <a class="text-decoration-none px-3 mb-2 brand-mark fs-5" href="{% url 'adminpanel:dashboard' %}">Admin</a>
+      <div class="brand-subtle px-3 mb-3 text-truncate" title="{{ user.email }}">{{ user.email }}</div>
+      {% include "includes/admin_sidenav_links.html" %}
+    </aside>
+    <div class="offcanvas offcanvas-start d-md-none glass-offcanvas" tabindex="-1" id="adminSidenavOffcanvas" aria-labelledby="adminSidenavLabel">
+      <div class="offcanvas-header border-bottom border-secondary border-opacity-25">
+        <div>
+          <div class="brand-mark" id="adminSidenavLabel">BulkGame Admin</div>
+          <div class="brand-subtle text-truncate" style="max-width: 200px;">{{ user.email }}</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body pt-3">
+        {% include "includes/admin_sidenav_links.html" %}
+      </div>
+    </div>
+    <div class="flex-grow-1 overflow-auto">
+      <div class="p-3 p-md-4 app-max">
+{% else %}
+  {% if not user.is_authenticated %}
+    <nav class="navbar navbar-dark bg-dark mb-4">
+      <div class="container">
+        <a class="navbar-brand" href="{% url 'core:home' %}">BulkGame</a>
+        <div>
+          <a class="btn btn-outline-light btn-sm me-2" href="{% url 'accounts:login' %}">Login</a>
+          <a class="btn btn-light btn-sm" href="{% url 'accounts:signup' %}">Signup</a>
+        </div>
+      </div>
+    </nav>
+  {% endif %}
+  <main class="pb-4 px-3 app-max d-flex flex-column min-vh-0">
+{% endif %}
+
+        {% for message in messages %}
+          <template class="django-message" data-tags="{{ message.tags|default:'info'|escape }}">{{ message }}</template>
+        {% endfor %}
+        {% block content %}{% endblock %}
+        {% include "includes/site_footer.html" %}
+
+{% if user.is_authenticated and nav_user_sidenav %}
+      </div>
+    </div>
+  </div>
+</div>
+{% elif user.is_authenticated and nav_is_admin %}
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+  </main>
+{% endif %}
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="appToastContainer" style="z-index: 1080;"></div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+  (function () {
+    function mapTag(tags) {
+      var t = (tags || "").split(/\s+/);
+      if (t.indexOf("error") !== -1) return "danger";
+      if (t.indexOf("success") !== -1) return "success";
+      if (t.indexOf("warning") !== -1) return "warning";
+      return "info";
+    }
+    function escapeHtml(s) {
+      var d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    }
+    window.showAppToast = function (body, variant) {
+      var c = document.getElementById("appToastContainer");
+      if (!c || !body) return;
+      var glass = document.body.classList.contains("glass-app");
+      var el = document.createElement("div");
+      el.setAttribute("role", "alert");
+      el.setAttribute("aria-live", "assertive");
+      el.className = "toast border-0 shadow show";
+      if (glass) {
+        el.classList.add("app-toast", "app-toast--" + variant);
+      } else {
+        el.classList.add("text-bg-" + (variant === "danger" ? "danger" : variant === "success" ? "success" : variant === "warning" ? "warning" : "dark"));
+      }
+      var closeClass = glass || variant === "danger" || variant === "success" ? "btn-close btn-close-white" : "btn-close";
+      el.innerHTML = "<div class=\"d-flex\"><div class=\"toast-body\">" + escapeHtml(body) + "</div><button type=\"button\" class=\"" + closeClass + " me-2 m-auto\" data-bs-dismiss=\"toast\" aria-label=\"Close\"></button></div>";
+      c.appendChild(el);
+      var t = new bootstrap.Toast(el, { autohide: true, delay: 5200 });
+      t.show();
+      el.addEventListener("hidden.bs.toast", function () { el.remove(); });
+    };
+    document.querySelectorAll("template.django-message").forEach(function (tmpl) {
+      var body = tmpl.content.textContent.trim();
+      if (body) {
+        showAppToast(body, mapTag(tmpl.getAttribute("data-tags") || ""));
+      }
+      tmpl.remove();
+    });
+  })();
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

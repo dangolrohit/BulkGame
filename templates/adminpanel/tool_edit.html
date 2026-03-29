@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ tool.name }} — BulkGame{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Edit tool</h1>
+<form method="post" class="card shadow-sm">
+  <div class="card-body">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Name</label>
+      <input type="text" name="name" class="form-control" value="{{ tool.name }}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Slug</label>
+      <input type="text" name="slug" class="form-control" value="{{ tool.slug }}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Description</label>
+      <textarea name="description" class="form-control" rows="4">{{ tool.description }}</textarea>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Sort order</label>
+      <input type="number" name="sort_order" class="form-control" value="{{ tool.sort_order }}">
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a href="{% url 'adminpanel:tool_list' %}" class="btn btn-link">Cancel</a>
+  </div>
+</form>
+{% endblock %}

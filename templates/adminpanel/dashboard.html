@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — BulkGame{% endblock %}
+{% block content %}
+<h1 class="h4 mb-4">Admin dashboard</h1>
+<div class="row g-3 mb-4">
+  <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted small">Users</div><div class="fs-3">{{ total_users }}</div></div></div></div>
+  <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted small">Active users</div><div class="fs-3">{{ active_users }}</div></div></div></div>
+  <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted small">Credits added (lifetime)</div><div class="fs-3">{{ credits_added }}</div></div></div></div>
+  <div class="col-md-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted small">Credits used</div><div class="fs-3">{{ credits_used }}</div></div></div></div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card shadow-sm"><div class="card-body"><div class="text-muted small">Posts deleted (all users)</div><div class="fs-3">{{ posts_deleted }}</div></div></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">Tools status</div>
+      <ul class="list-group list-group-flush">
+        {% for t in tools_summary %}
+          <li class="list-group-item d-flex justify-content-between">
+            <span>{{ t.name }}</span>
+            <span>
+              {% if t.is_published %}<span class="badge bg-success">Published</span>{% else %}<span class="badge bg-secondary">Draft</span>{% endif %}
+              {% if t.is_hidden %}<span class="badge bg-dark">Hidden</span>{% endif %}
+              {% if t.is_in_maintenance %}<span class="badge bg-warning text-dark">Maintenance</span>{% endif %}
+            </span>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-muted">No tools.</li>
+        {% endfor %}
+      </ul>
+      <div class="card-body"><a href="{% url 'adminpanel:tool_list' %}">Manage tools</a></div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">Recent admin actions</div>
+      <ul class="list-group list-group-flush">
+        {% for log in recent_audit %}
+          <li class="list-group-item small">
+            <strong>{{ log.action }}</strong>
+            {% if log.actor %}by {{ log.actor.email }}{% endif %}
+            <span class="text-muted">— {{ log.created_at }}</span>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-muted">No audit entries yet.</li>
+        {% endfor %}
+      </ul>
+      <div class="card-body"><a href="{% url 'adminpanel:audit_list' %}">All audit logs</a></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

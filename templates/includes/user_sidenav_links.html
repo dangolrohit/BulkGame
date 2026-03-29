@@ -1,0 +1,13 @@
+{# expects: nav_section #}
+<nav class="nav nav-pills flex-column gap-1 px-2">
+  <a class="nav-link {% if nav_section == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}">Dashboard</a>
+  <a class="nav-link {% if nav_section == 'tools' %}active{% endif %}" href="{% url 'tools:list' %}">Tools</a>
+  <a class="nav-link {% if nav_section == 'channel' %}active{% endif %}" href="{% url 'channels:home' %}">Channel</a>
+  <a class="nav-link {% if nav_section == 'billing' %}active{% endif %}" href="{% url 'billing:home' %}">Add Credit</a>
+  <a class="nav-link {% if nav_section == 'settings' %}active{% endif %}" href="{% url 'accounts:settings' %}">Setting</a>
+  <hr class="my-2">
+  <form method="post" action="{% url 'accounts:logout' %}" class="px-2 mb-0">
+    {% csrf_token %}
+    <button type="submit" class="nav-link text-danger w-100 text-start border-0 bg-transparent py-2 px-2 rounded">Logout</button>
+  </form>
+</nav>

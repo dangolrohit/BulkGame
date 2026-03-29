@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Topup — {{ u.email }} — BulkGame{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Credit top-up</h1>
+<p class="text-muted">{{ u.full_name }} — {{ u.email }}</p>
+<div class="row g-4">
+  <div class="col-md-5">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="text-muted small">Current balance</div>
+        <div class="display-6">{{ wallet.balance }}</div>
+        <div class="small text-muted mt-2">Lifetime added: {{ wallet.lifetime_added }} · Used: {{ wallet.lifetime_used }}</div>
+      </div>
+    </div>
+    <div class="card shadow-sm">
+      <div class="card-header">Add credits</div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Amount</label>
+            <input type="number" name="amount" class="form-control" min="1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Note / reason</label>
+            <textarea name="note" class="form-control" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn btn-success">Submit top-up</button>
+          <a class="btn btn-link" href="{% url 'adminpanel:user_detail' u.pk %}">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-header">Recent top-ups</div>
+      <ul class="list-group list-group-flush">
+        {% for t in recent_topups %}
+          <li class="list-group-item d-flex justify-content-between small">
+            <span>+{{ t.amount }} — {{ t.note|truncatechars:40 }}</span>
+            <span class="text-muted">{{ t.created_at }}</span>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-muted">None yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

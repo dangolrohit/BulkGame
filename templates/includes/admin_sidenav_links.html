@@ -1,0 +1,14 @@
+{# expects: nav_admin_section #}
+<nav class="nav nav-pills flex-column gap-1 px-2">
+  <a class="nav-link {% if nav_admin_section == 'dashboard' %}active{% endif %}" href="{% url 'adminpanel:dashboard' %}">Dashboard</a>
+  <a class="nav-link {% if nav_admin_section == 'credit_requests' %}active{% endif %}" href="{% url 'adminpanel:credit_requests' %}">Credit requests</a>
+  <a class="nav-link {% if nav_admin_section == 'users' %}active{% endif %}" href="{% url 'adminpanel:user_list' %}">User management</a>
+  <a class="nav-link {% if nav_admin_section == 'tools' %}active{% endif %}" href="{% url 'adminpanel:tool_list' %}">Tools management</a>
+  <a class="nav-link {% if nav_admin_section == 'audit' %}active{% endif %}" href="{% url 'adminpanel:audit_list' %}">Audit logs</a>
+  <a class="nav-link {% if nav_admin_section == 'settings' %}active{% endif %}" href="{% url 'adminpanel:settings' %}">Setting</a>
+  <hr class="my-2">
+  <form method="post" action="{% url 'accounts:logout' %}" class="px-2 mb-0">
+    {% csrf_token %}
+    <button type="submit" class="nav-link text-danger w-100 text-start border-0 bg-transparent py-2 px-2 rounded">Logout</button>
+  </form>
+</nav>

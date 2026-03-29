@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Audit logs — BulkGame{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Audit logs</h1>
+<div class="table-responsive shadow-sm bg-white rounded">
+  <table class="table table-sm mb-0">
+    <thead><tr><th>When</th><th>Action</th><th>Actor</th><th>Target</th><th>Object</th></tr></thead>
+    <tbody>
+      {% for log in logs %}
+        <tr>
+          <td class="text-nowrap small">{{ log.created_at }}</td>
+          <td>{{ log.action }}</td>
+          <td class="small">{{ log.actor.email|default:"—" }}</td>
+          <td class="small">{{ log.target_user.email|default:"—" }}</td>
+          <td class="small">{{ log.object_type }} {{ log.object_id }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-muted">No logs.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

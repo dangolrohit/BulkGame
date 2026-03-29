@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+{% block title %}{{ tool.name }} — BulkGame{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+  <div>
+    <h1 class="tool-page-title mb-1">{{ tool.name }}</h1>
+    <p class="tool-page-desc mb-0">{{ tool.description }}</p>
+  </div>
+  {% if can_use %}
+  <div class="d-flex flex-wrap gap-2 align-items-center ms-auto">
+    <button type="button" class="btn btn-glass btn-sm" id="selectAllBtn" disabled>Select all</button>
+    <button type="button" class="btn btn-glass btn-sm" id="selectNoneBtn" disabled>Clear</button>
+    <button type="button" class="btn btn-glass-danger btn-sm" id="deleteBtn" disabled>Delete</button>
+  </div>
+  {% endif %}
+</div>
+
+{% if not can_use %}
+  <div class="alert alert-warning">This tool is not available (maintenance or access disabled).</div>
+{% else %}
+  {% if not pages %}
+    <div class="alert alert-info glass-panel glass-panel--subtle">
+      No Pages in your account yet. Go to <a href="{% url 'channels:home' %}" style="color:var(--accent-2);">Channel</a>, save a connection, then use <strong>Sync pages</strong> (token needs <code style="color:var(--text-muted);">pages_show_list</code>).
+    </div>
+  {% endif %}
+
+  <div class="glass-panel glass-panel--subtle p-3 mb-3">
+    <div class="row g-3 align-items-end">
+      <div class="col-6 col-lg-2">
+        <label class="form-label">Page</label>
+        <select id="pageSelect" class="form-select form-select-sm">
+          <option value="">Select…</option>
+          {% for p in pages %}
+            <option value="{{ p.pk }}">{{ p.page_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label">Age filter</label>
+        <select id="dayFilter" class="form-select form-select-sm">
+          <option value="all">All</option>
+          <option value="7">7 days</option>
+          <option value="15">15 days</option>
+          <option value="30">30 days</option>
+          <option value="90">90 days</option>
+        </select>
+      </div>
+      <div class="col-6 col-lg-2">
+        <label class="form-label">Max posts</label>
+        <select id="limitSelect" class="form-select form-select-sm">
+          <option value="10">10</option>
+          <option value="20">20</option>
+          <option value="30">30</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+      <div class="col-12 col-lg-6 d-flex flex-wrap gap-2 justify-content-lg-end">
+        <button type="button" class="btn btn-glass btn-sm" id="refreshPagesBtn" title="Reload page list">Refresh pages</button>
+        <button type="button" class="btn btn-glass-primary btn-sm" id="loadPostsBtn">Load posts</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteProgressWrap" class="glass-panel glass-panel--subtle p-3 mb-3 d-none">
+    <div class="d-flex justify-content-between align-items-center small mb-2">
+      <span id="deleteProgressLabel" class="text-uppercase" style="letter-spacing:0.08em;font-weight:600;color:var(--text-muted);">Deleting</span>
+      <span id="deleteProgressCounts" class="font-monospace" style="color:var(--text);">0 / 0</span>
+    </div>
+    <div class="delete-progress-track mb-2">
+      <div id="deleteProgressFill" class="delete-progress-fill"></div>
+    </div>
+    <div class="d-flex justify-content-between small" style="color:var(--text-muted);">
+      <span id="deleteProgressDeleted">Removed: 0</span>
+      <span id="deleteProgressRemaining">Remaining: 0</span>
+    </div>
+  </div>
+
+  <p class="small mb-2" style="color:var(--text-muted);" id="postsHint">Pick a Page, filters, then <strong style="color:var(--accent-2);">Load posts</strong>. <strong>Delete</strong> calls Facebook’s API to remove the post; your Page token needs permission to manage/delete content (e.g. <code style="color:var(--text-muted);">pages_manage_posts</code>). Each successful delete uses 1 credit.</p>
+  <div id="postsStatus" class="small mb-3" style="color:var(--text-muted);"></div>
+
+  <div id="postGrid" class="post-grid-5"></div>
+
+  <div class="mt-3 small font-monospace" style="color:var(--text-muted);" id="jobStatus"></div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if can_use %}
+<script>
+  (function () {
+    const PAGE_LIST_URL = "{% url 'channels:facebook_pages' %}";
+    const POSTS_URL = "{% url 'channels:page_posts' %}";
+    const QUEUE_URL = "{% url 'fb_remover:queue_job' %}";
+    const JOB_STATUS_TMPL = "{% url 'fb_remover:job_status' job_id=999999999 %}";
+    const TOOL_SLUG = "{{ tool.slug }}";
+
+    function jobStatusUrl(id) {
+      return JOB_STATUS_TMPL.replace("999999999", String(id));
+    }
+
+    function getCookie(name) {
+      const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+      return v ? decodeURIComponent(v[2]) : null;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    const pageSelect = document.getElementById('pageSelect');
+    if (!pageSelect) return;
+
+    function safeHttpUrl(u) {
+      if (!u || typeof u !== 'string') return '';
+      return (u.startsWith('https://') || u.startsWith('http://')) ? u : '';
+    }
+
+    const dayFilter = document.getElementById('dayFilter');
+    const limitSelect = document.getElementById('limitSelect');
+    const loadBtn = document.getElementById('loadPostsBtn');
+    const refreshPagesBtn = document.getElementById('refreshPagesBtn');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const selectNoneBtn = document.getElementById('selectNoneBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const postGrid = document.getElementById('postGrid');
+    const postsStatus = document.getElementById('postsStatus');
+    const jobStatusEl = document.getElementById('jobStatus');
+    const deleteProgressWrap = document.getElementById('deleteProgressWrap');
+    const deleteProgressFill = document.getElementById('deleteProgressFill');
+    const deleteProgressCounts = document.getElementById('deleteProgressCounts');
+    const deleteProgressDeleted = document.getElementById('deleteProgressDeleted');
+    const deleteProgressRemaining = document.getElementById('deleteProgressRemaining');
+
+    let pollTimer = null;
+
+    function setPageOptions(pages) {
+      const cur = pageSelect.value;
+      pageSelect.innerHTML = '<option value="">Select…</option>';
+      (pages || []).forEach(function (p) {
+        const opt = document.createElement('option');
+        opt.value = String(p.pk);
+        opt.textContent = p.name;
+        pageSelect.appendChild(opt);
+      });
+      if (cur && [...pageSelect.options].some(o => o.value === cur)) {
+        pageSelect.value = cur;
+      }
+    }
+
+    async function refreshPageList() {
+      postsStatus.textContent = 'Refreshing page list…';
+      try {
+        const res = await fetch(PAGE_LIST_URL, { credentials: 'same-origin' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        setPageOptions(data.pages);
+        postsStatus.textContent = data.pages && data.pages.length
+          ? 'Pages updated.'
+          : 'No pages yet — sync from Channel.';
+      } catch (e) {
+        postsStatus.textContent = 'Could not load pages: ' + e.message;
+      }
+    }
+
+    function renderPosts(posts) {
+      postGrid.innerHTML = '';
+      if (!posts || !posts.length) {
+        postGrid.innerHTML = '<div class="text-center py-4 small" style="color:var(--text-muted);grid-column:1/-1;">No posts match this filter.</div>';
+        selectAllBtn.disabled = true;
+        selectNoneBtn.disabled = true;
+        deleteBtn.disabled = true;
+        return;
+      }
+      selectAllBtn.disabled = false;
+      selectNoneBtn.disabled = false;
+      deleteBtn.disabled = false;
+
+      posts.forEach(function (post, idx) {
+        const wrap = document.createElement('div');
+        const card = document.createElement('div');
+        card.className = 'post-card-mini';
+
+        const imgUrl = safeHttpUrl(post.image_url);
+        if (imgUrl) {
+          const img = document.createElement('img');
+          img.className = 'post-thumb';
+          img.alt = '';
+          img.src = imgUrl;
+          card.appendChild(img);
+        }
+
+        const body = document.createElement('div');
+        body.className = 'post-card-body';
+
+        const checkWrap = document.createElement('div');
+        checkWrap.className = 'form-check';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'form-check-input post-check';
+        cb.value = String(post.id || '');
+        cb.id = 'pc' + idx;
+        const lab = document.createElement('label');
+        lab.className = 'form-check-label';
+        lab.htmlFor = cb.id;
+        lab.textContent = String(post.id || '');
+        checkWrap.appendChild(cb);
+        checkWrap.appendChild(lab);
+        body.appendChild(checkWrap);
+
+        const p = document.createElement('p');
+        p.className = 'post-msg';
+        const raw = (post.message || '').trim();
+        p.textContent = raw || '—';
+        body.appendChild(p);
+
+        const meta = document.createElement('div');
+        meta.className = 'post-meta';
+        meta.textContent = post.created_time || '';
+        body.appendChild(meta);
+
+        const linkUrl = safeHttpUrl(post.permalink_url);
+        if (linkUrl) {
+          const a = document.createElement('a');
+          a.className = 'post-meta d-inline-block mt-1';
+          a.style.color = 'var(--accent)';
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.href = linkUrl;
+          a.textContent = 'Open';
+          body.appendChild(a);
+        }
+
+        card.appendChild(body);
+        wrap.appendChild(card);
+        postGrid.appendChild(wrap);
+      });
+    }
+
+    loadBtn?.addEventListener('click', async function () {
+      const pagePk = pageSelect.value;
+      if (!pagePk) {
+        postsStatus.textContent = 'Select a Page first.';
+        return;
+      }
+      const days = dayFilter.value || 'all';
+      const limit = limitSelect.value || '50';
+      postsStatus.textContent = 'Loading posts…';
+      postGrid.innerHTML = '';
+      selectAllBtn.disabled = true;
+      selectNoneBtn.disabled = true;
+      deleteBtn.disabled = true;
+      try {
+        const url = POSTS_URL
+          + '?page=' + encodeURIComponent(pagePk)
+          + '&days=' + encodeURIComponent(days)
+          + '&limit=' + encodeURIComponent(limit);
+        const res = await fetch(url, { credentials: 'same-origin' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        const n = data.posts ? data.posts.length : 0;
+        postsStatus.textContent = (data.page_name ? data.page_name + ' · ' : '') + n + ' post(s) · max ' + (data.limit || limit);
+        renderPosts(data.posts);
+      } catch (e) {
+        postsStatus.textContent = 'Error: ' + e.message;
+        postGrid.innerHTML = '';
+      }
+    });
+
+    refreshPagesBtn?.addEventListener('click', refreshPageList);
+
+    selectAllBtn?.addEventListener('click', function () {
+      document.querySelectorAll('.post-check').forEach(function (c) { c.checked = true; });
+    });
+    selectNoneBtn?.addEventListener('click', function () {
+      document.querySelectorAll('.post-check').forEach(function (c) { c.checked = false; });
+    });
+
+    function stopPoll() {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    }
+
+    function applyProgress(data) {
+      const total = data.requested_count || 0;
+      const deleted = data.deleted || 0;
+      const remaining = data.remaining || 0;
+      const pct = typeof data.percent === 'number' ? data.percent : 0;
+      deleteProgressFill.style.width = pct + '%';
+      deleteProgressCounts.textContent = deleted + ' / ' + total;
+      deleteProgressDeleted.textContent = 'Removed: ' + deleted;
+      deleteProgressRemaining.textContent = 'Remaining: ' + remaining;
+    }
+
+    function pollJob(jobId) {
+      stopPoll();
+      async function tick() {
+        try {
+          const res = await fetch(jobStatusUrl(jobId), { credentials: 'same-origin' });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            stopPoll();
+            jobStatusEl.textContent = data.error || res.statusText;
+            return;
+          }
+          applyProgress(data);
+          const done = ['completed', 'failed', 'partial'].indexOf(data.status) !== -1;
+          if (done) {
+            stopPoll();
+            jobStatusEl.textContent = 'Done — job #' + data.job_id + ' · ' + data.status
+              + ' · removed ' + (data.deleted || 0)
+              + (data.failed ? (' · failed ' + data.failed) : '')
+              + (data.skipped ? (' · skipped ' + data.skipped) : '');
+            loadBtn.click();
+          }
+        } catch (e) {
+          stopPoll();
+          jobStatusEl.textContent = e.message;
+        }
+      }
+      tick();
+      pollTimer = setInterval(tick, 350);
+    }
+
+    deleteBtn?.addEventListener('click', async function () {
+      const pagePk = pageSelect.value;
+      if (!pagePk) return;
+      const ids = [...document.querySelectorAll('.post-check:checked')].map(function (c) { return c.value; });
+      if (!ids.length) {
+        jobStatusEl.textContent = 'Select at least one post.';
+        return;
+      }
+      jobStatusEl.textContent = '';
+      deleteProgressWrap.classList.add('d-none');
+      stopPoll();
+      try {
+        const res = await fetch(QUEUE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+          },
+          body: JSON.stringify({
+            page_id: parseInt(pagePk, 10),
+            post_ids: ids,
+            tool_slug: TOOL_SLUG,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          jobStatusEl.textContent = data.error || res.statusText;
+          return;
+        }
+        const reqN = data.requested_count || ids.length;
+        deleteProgressWrap.classList.remove('d-none');
+        applyProgress({
+          requested_count: reqN,
+          deleted: 0,
+          remaining: reqN,
+          percent: 0,
+        });
+        pollJob(data.job_id);
+      } catch (e) {
+        jobStatusEl.textContent = e.message;
+      }
+    });
+
+    refreshPageList();
+  })();
+</script>
+{% endif %}
+{% endblock %}

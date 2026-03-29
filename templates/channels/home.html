@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Channel — BulkGame{% endblock %}
+{% block content %}
+<h1 class="tool-page-title mb-2">Channel</h1>
+<p class="tool-page-desc mb-4">Connect Facebook by scanning a <strong>user access token</strong> against the Graph API (<code>/me</code>). To <strong>list Pages</strong> in the Bulk Post Remover dropdown, the token needs <code>pages_show_list</code>. To <strong>load posts</strong>, the Page token (returned with each Page) needs permissions such as <code>pages_read_engagement</code> (per Meta’s current app settings).</p>
+
+<div class="glass-panel glass-panel--subtle mb-4">
+  <div class="px-3 py-2 border-bottom small text-uppercase fw-semibold" style="border-color:var(--glass-border) !important;color:var(--text-muted);letter-spacing:0.06em;">Scan token</div>
+  <div class="p-3">
+    <p class="small mb-3" style="color:var(--text-muted);">
+      Paste a user access token. API version: <code>{{ graph_version }}</code>.
+    </p>
+    <form method="post" class="mb-0">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="scan">
+      <div class="mb-3">
+        <label class="form-label" for="access_token">User access token</label>
+        <textarea class="form-control font-monospace small" id="access_token" name="access_token" rows="3" placeholder="EAAB..." autocomplete="off"></textarea>
+      </div>
+      <button type="submit" class="btn btn-glass-primary">Scan token</button>
+    </form>
+  </div>
+</div>
+
+{% if scan_result %}
+<div class="glass-panel mb-4" style="border-color:rgba(107,201,168,0.35) !important;">
+  <div class="px-3 py-2 border-bottom small text-uppercase fw-semibold" style="border-color:rgba(107,201,168,0.25) !important;background:rgba(107,201,168,0.12);color:var(--text);letter-spacing:0.06em;">Graph API user</div>
+  <div class="p-3">
+    <dl class="row mb-0 small">
+      <dt class="col-sm-3">Facebook ID</dt>
+      <dd class="col-sm-9 font-monospace">{{ scan_result.id }}</dd>
+      <dt class="col-sm-3">Name</dt>
+      <dd class="col-sm-9">{{ scan_result.name|default:"—" }}</dd>
+      <dt class="col-sm-3">Email</dt>
+      <dd class="col-sm-9">{{ scan_result.email|default:"—" }}{% if not scan_result.email %}<span class="text-muted"> (needs email permission)</span>{% endif %}</dd>
+    </dl>
+    {% if pending_save %}
+    <hr>
+    <form method="post" class="d-inline">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save">
+      <button type="submit" class="btn btn-success">Save connection</button>
+    </form>
+    <form method="post" class="d-inline ms-2">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="clear">
+      <button type="submit" class="btn btn-glass btn-sm">Discard</button>
+    </form>
+    <p class="small text-muted mt-2 mb-0">Saving stores the token encrypted. Session holds it for {{ pending_ttl_minutes }} minutes until you save or discard.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <a class="btn btn-outline-primary btn-sm" href="{% url 'channels:facebook_connect' %}">Connect Facebook (OAuth)</a>
+  <a class="btn btn-glass btn-sm" href="{% url 'tools:facebook_bulk_remover' %}">Open Bulk Post Remover</a>
+</div>
+
+<div class="glass-panel glass-panel--subtle">
+  <div class="px-3 py-2 border-bottom small text-uppercase fw-semibold" style="border-color:var(--glass-border) !important;color:var(--text-muted);letter-spacing:0.06em;">Saved connections</div>
+  <ul class="list-group list-group-flush">
+    {% for c in connections %}
+      <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+          <span class="fw-medium" style="color:var(--text);">Facebook user</span>
+          <span class="font-monospace small">{{ c.facebook_user_id }}</span>
+          <span class="text-muted small ms-2">{{ c.page_count }} page(s)</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="text-muted small">{{ c.connected_at }}</span>
+          <form method="post" class="mb-0">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="sync_pages">
+            <input type="hidden" name="connection_id" value="{{ c.pk }}">
+            <button type="submit" class="btn btn-sm btn-outline-primary">Sync pages</button>
+          </form>
+        </div>
+      </li>
+    {% empty %}
+      <li class="list-group-item text-muted">No saved connections yet. Scan a token and click Save connection.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

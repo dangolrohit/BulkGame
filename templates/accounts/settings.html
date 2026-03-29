@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Settings — BulkGame{% endblock %}
+{% block content %}
+<div class="tool-page-title mb-4">Settings</div>
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="glass-panel glass-panel--subtle p-3 p-md-4">
+      <form method="post">
+        {% csrf_token %}
+        {% include "accounts/includes/settings_fields.html" with show_timezone=True %}
+        <button type="submit" class="btn btn-glass-primary">Save</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

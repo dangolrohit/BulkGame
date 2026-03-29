@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Tools — BulkGame{% endblock %}
+{% block content %}
+<div class="tool-page-title mb-1">Tools</div>
+<p class="tool-page-desc mb-4">Launch a tool to open its workspace.</p>
+
+<div class="row g-3">
+  {% for row in items %}
+    <div class="col-md-6 col-lg-4">
+      <div class="glass-panel glass-panel--subtle h-100 d-flex flex-column p-3">
+        <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+          <h2 class="h6 mb-0" style="color:var(--text);">{{ row.tool.name }}</h2>
+          {% if row.tool.is_in_maintenance %}
+            <span class="badge bg-warning text-dark flex-shrink-0">Maintenance</span>
+          {% endif %}
+        </div>
+        <p class="small flex-grow-1 mb-3" style="color:var(--text-muted);line-height:1.5;">{{ row.tool.description|default:""|truncatewords:28 }}</p>
+        <div class="mt-auto">
+          {% if row.tool.is_in_maintenance %}
+            <button type="button" class="btn btn-glass btn-sm w-100" disabled>Unavailable</button>
+          {% elif row.can_use %}
+            {% if row.tool.slug == "facebook-bulk-post-remover" %}
+              <a class="btn btn-glass-primary btn-sm w-100" href="{% url 'tools:facebook_bulk_remover' %}">Launch tool</a>
+            {% else %}
+              <button type="button" class="btn btn-glass btn-sm w-100" disabled>Coming soon</button>
+            {% endif %}
+          {% else %}
+            <button type="button" class="btn btn-glass btn-sm w-100" disabled title="You don’t have access to this tool">No access</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="glass-panel glass-panel--subtle p-4 text-center small" style="color:var(--text-muted);">No tools available right now.</div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
