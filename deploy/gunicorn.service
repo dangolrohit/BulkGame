@@ -1,0 +1,18 @@
+[Unit]
+Description=BulkGame Gunicorn (Django)
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/bulkgame
+Environment="PATH=/var/www/bulkgame/venv/bin"
+ExecStart=/var/www/bulkgame/venv/bin/gunicorn \
+    --bind 127.0.0.1:8001 \
+    --workers 3 \
+    --timeout 120 \
+    bulkdel.wsgi:application
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

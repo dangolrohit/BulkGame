@@ -5,6 +5,7 @@ Django settings for BulkGame (Facebook Bulk Post Remover SaaS).
 from pathlib import Path
 
 import environ
+from django.urls import reverse_lazy
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -15,6 +16,20 @@ environ.Env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-dev-only-change-me")
 DEBUG = env.bool("DEBUG", default=True)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+
+# Subpath on VPS (e.g. /bulkgame). Nginx should strip this prefix when proxying; Django uses it for URL generation.
+FORCE_SCRIPT_NAME = env("FORCE_SCRIPT_NAME", default="").strip() or None
+_subpath = (FORCE_SCRIPT_NAME or "").rstrip("/")
+if _subpath:
+    STATIC_URL = f"{_subpath}/static/"
+    MEDIA_URL = f"{_subpath}/media/"
+else:
+    STATIC_URL = "static/"
+    MEDIA_URL = "media/"
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -98,9 +113,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 
-LOGIN_URL = "/login/"
-LOGIN_REDIRECT_URL = "/dashboard/"
-LOGOUT_REDIRECT_URL = "/"
+LOGIN_URL = reverse_lazy("accounts:login")
+LOGIN_REDIRECT_URL = reverse_lazy("core:dashboard")
+LOGOUT_REDIRECT_URL = reverse_lazy("core:home")
 
 # Celery
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://127.0.0.1:6379/0")
