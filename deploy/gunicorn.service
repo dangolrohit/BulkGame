@@ -7,10 +7,14 @@ User=www-data
 Group=www-data
 WorkingDirectory=/var/www/bulkgame
 Environment="PATH=/var/www/bulkgame/venv/bin"
+Environment="PYTHONUNBUFFERED=1"
 ExecStart=/var/www/bulkgame/venv/bin/gunicorn \
     --bind 127.0.0.1:8001 \
     --workers 3 \
     --timeout 120 \
+    --error-logfile - \
+    --access-logfile - \
+    --capture-output \
     bulkdel.wsgi:application
 Restart=on-failure
 

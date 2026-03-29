@@ -136,6 +136,31 @@ FERNET_KEY = env("FERNET_KEY", default="")
 # Signup bonus credits
 SIGNUP_CREDIT_BONUS = 5
 
+# Log 500s and tracebacks to stderr (visible in: journalctl -u gunicorn-bulkgame -f)
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
+
 from django.contrib.messages import constants as message_constants
 
 MESSAGE_TAGS = {
