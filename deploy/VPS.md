@@ -84,7 +84,7 @@ Set at least:
 | `CELERY_TASK_ALWAYS_EAGER` | Omit or `False` if you run **Celery** (step 10) |
 | `FACEBOOK_REDIRECT_URI` | Must match how users reach `/channels/facebook/callback/` |
 
-**Subpath only** (site at `http://IP/bulkgame/`): set `FORCE_SCRIPT_NAME=/bulkgame` and use **Option B** Nginx below.  
+**Subpath only** (site at `http://104.236.1.98/bulkgame/`): set `FORCE_SCRIPT_NAME=/bulkgame` and use **Option B** Nginx below.  
 **Domain root** (e.g. `http://IP/` or a subdomain): leave `FORCE_SCRIPT_NAME` unset; use **Option A** Nginx.
 
 ---

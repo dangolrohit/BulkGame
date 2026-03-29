@@ -16,7 +16,8 @@ ExecStart=/var/www/bulkgame/venv/bin/gunicorn \
     --access-logfile - \
     --capture-output \
     bulkdel.wsgi:application
-Restart=on-failure
+Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

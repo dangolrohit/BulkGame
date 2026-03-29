@@ -30,7 +30,9 @@ def _admin_nav_section(path: str) -> str:
 
 def navigation(request):
     user = getattr(request, "user", None)
-    path = getattr(request, "path", "") or ""
+    # path_info excludes FORCE_SCRIPT_NAME, so side-nav highlighting works
+    # whether the app is mounted at / or under a subpath like /bulkgame.
+    path = getattr(request, "path_info", "") or ""
     is_admin = bool(
         user and user.is_authenticated and getattr(user, "is_admin_role", False)
     )
